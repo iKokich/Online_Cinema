@@ -2,32 +2,32 @@ import psycopg2
 import yaml
 
 class DatabaseConnection:
-    def __init__(self, config_file = 'db_info.yaml'):
+    def __init__(self, config_file='db_info.yaml'):
         self.config_file = config_file
         self.conn = None
 
-    def connection(self):
+    def connect(self):
         try:
             with open(self.config_file, 'r') as f:
                 config = yaml.safe_load(f)
             self.conn = psycopg2.connect(
-                dbname = config['database']['dbname'],
-                user = config['database']['user'],
-                password = config['database']['password'],
-                host = config['database']['host'],
-                port = config['database']['port']
+                dbname=config['database']['dbname'],
+                user=config['database']['user'],
+                password=config['database']['password'],
+                host=config['database']['host'],
+                port=config['database']['port']
             )
             print("Database connected successfully!")
-        except(Exception, psycopg2.Error) as error:
+        except (Exception, psycopg2.Error) as error:
             print("Error while connecting to PostgreSQL", error)
 
     def close(self):
         if self.conn:
             self.conn.close()
-            print("Соединение закрыто")
+            print("Connection closed")
 
     def execute(self, query, params=None):
-        with self.conn.cursos() as cur:
+        with self.conn.cursor() as cur:  # Опечатка была здесь
             cur.execute(query, params)
             self.conn.commit()
 
@@ -35,15 +35,12 @@ class DatabaseConnection:
         columns = ', '.join(data.keys())
         placeholders = ', '.join(['%s'] * len(data))
         values = tuple(data.values())
-
-        query = f"INSET INTO {table_name} ({columns}) VALUES ({placeholders})"
-
+        query = f"INSERT INTO {table_name} ({columns}) VALUES ({placeholders})"
         self.execute(query, values)
 
     def update(self, table_name, data, where):
         set_clause = ', '.join([f"{key} = %s" for key in data])
         values = tuple(data.values())
-
         query = f"UPDATE {table_name} SET {set_clause} WHERE {where}"
         self.execute(query, values)
 
