@@ -1,0 +1,6 @@
+database:
+  dbname: Cinema
+  host: localhost
+  port: 5432
+  user: postgres
+  password: 523678
