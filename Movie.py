@@ -1,20 +1,44 @@
 class Movie:
-    def __init__(self, rating, movie_name, movie_description, genres, release_date, actors):
-        self.rating = rating
-        self.movie_name = movie_name
-        self.movie_description  = movie_description
-        self.genres = genres
-        self.release_date = release_date
-        self.actors = actors
+    def __init__(self, title, year, genre, id=None):
+        self.title = title
+        self.year = year
+        self.genre = genre
+        self.id = id
 
-    def add_actor(self, actor):
-        self.actors.append(actor)
+    def save(self, db):
+        if self.db:
+            db.update('movies', {'title': self.title, 'year': self.year, 'genre': self.genre}, f"id={self.id}")
+        else:
+            db.insert('movies', {'title': self.title, 'year': self.year, 'genre': self.genre})
+            result = db.fetchall(
+                f"SELECT id FROM movies WHERE title='{self.title}' AND year={self.year} AND genre='{self.genre}'")
+            self.id = result[0][0]
 
-    def remove_actor(self, actor):
-        self.actors.remove(actor)
+    def delete(self, db):
+        db.delete('movies', f"id={self.id}")
 
-    def add_genre(self, genre):
-        self.genres.append(genre)
+    @classmethod
+    def get_by_id(cls, db, movie_id):
+        query = f"SELECT * FROM movies WHERE id={movie_id}"
+        result = db.fetchall(query)
+        if result:
+            return cls(*result[0][1:])
+        return None
 
-    def remove_genre(self, genre):
-        self.genres.remove(genre)
+    @classmethod
+    def search(cls, db, title=None, year=None, genre=None):
+        query = "SELECT * FROM movies"
+        conditions = []
+        if title:
+            conditions.append(f"title LIKE '%{title}%'")
+        if year:
+            conditions.append(f"year={year}")
+        if genre:
+            conditions.append(f"genre='{genre}'")
+        if conditions:
+            query += f" WHERE {' AND '.join(conditions)}"
+        results = db.fetchall(query)
+        return [cls(*result[1:]) for result in results]
+
+    def __str__(self):
+        return f"{self.title} ({self.year}) - {self.genre}"
