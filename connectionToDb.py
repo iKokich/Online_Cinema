@@ -1,6 +1,7 @@
 import psycopg2
 import yaml
 
+
 class DatabaseConnection:
     def __init__(self, config_file='db_info.yaml'):
         self.config_file = config_file
@@ -27,9 +28,14 @@ class DatabaseConnection:
             print("Connection closed")
 
     def execute(self, query, params=None):
-        with self.conn.cursor() as cur:  # Опечатка была здесь
+        with self.conn.cursor() as cur:
             cur.execute(query, params)
             self.conn.commit()
+
+    def fetchall(self, query, params=None):
+        with self.conn.cursor() as cur:
+            cur.execute(query, params)
+            return cur.fetchall()
 
     def insert(self, table_name, data):
         columns = ', '.join(data.keys())
@@ -48,11 +54,13 @@ class DatabaseConnection:
         query = f"DELETE FROM {table_name} WHERE {where}"
         self.execute(query)
 
-    def fetchall(self, query):
+    def fetchall(self, query, params=None):
         with self.conn.cursor() as cur:
-            cur.execute(query)
+            cur.execute(query, params)
             return cur.fetchall()
 
     def get_all_data(self, table_name):
         query = f"SELECT * FROM {table_name}"
         return self.fetchall(query)
+
+
